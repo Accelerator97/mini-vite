@@ -4,8 +4,11 @@ import connect from "connect";
 // picocolors 是一个用来在命令行显示不同颜色文本的工具
 import { blue, green } from "picocolors";
 import { optimize } from "../optimizer/index";
-import { resolvePlugins, Plugin } from "../plugins";
+import { resolvePlugins } from "../plugins";
 import { createPluginContainer, PluginContainer } from "../pluginContainer";
+import { indexHtmlMiddware } from "./middleware/indexHtml";
+import { transformMiddleware } from './middleware/transform'
+import { Plugin } from '../pluginsType'
 
 export interface ServerContext {
   root: string;
@@ -20,6 +23,8 @@ export async function startDevServer() {
   const plugins = resolvePlugins();
   const pluginContainer = createPluginContainer(plugins);
 
+  console.log(`output->root`, root)
+
   const serverContext: ServerContext = {
     root,
     app,
@@ -33,7 +38,8 @@ export async function startDevServer() {
     }
   }
 
-
+  app.use(indexHtmlMiddware(serverContext))
+  app.use(transformMiddleware(serverContext));
   app.listen(3000, async () => {
     await optimize(root)
     console.log(
