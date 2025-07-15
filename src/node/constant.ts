@@ -33,3 +33,5 @@ export const QEURY_RE = /\?.*$/s;
 export const HASH_RE = /#.*$/s;
 
 export const DEFAULT_EXTERSIONS = [".tsx", ".ts", ".jsx", "js"];
+
+export const CLIENT_PUBLIC_PATH = "/@vite/client";

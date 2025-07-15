@@ -6,7 +6,7 @@ import type {
     ResolvedId,
 } from "rollup";
 
-import { Plugin } from './plugins'
+import { Plugin } from './pluginsType'
 
 export interface PluginContainer {
     resolveId(id: string, importer?: string): Promise<PartialResolvedId | null>;
