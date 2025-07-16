@@ -11,21 +11,40 @@ import { transformMiddleware } from './middleware/transform'
 import { staticMiddleware } from './middleware/static'
 import { Plugin } from '../pluginsType'
 import { ModuleGraph } from "../ModuleGraph";
+import chokidar, { FSWatcher } from "chokidar";
+import { createWebSocketServer } from '../ws'
+import { bindingHMREvents } from "../hmr";
 
 export interface ServerContext {
   root: string;
   pluginContainer: PluginContainer;
   app: connect.Server;
   plugins: Plugin[];
-  moduleGraph: ModuleGraph
+  moduleGraph: ModuleGraph,
+  ws: { send: (data: any) => void; close: () => void };
+  watcher: FSWatcher;
 }
 export async function startDevServer() {
+
   const app = connect();
   const root = process.cwd();
   const startTime = Date.now();
   const plugins = resolvePlugins();
   const pluginContainer = createPluginContainer(plugins);
   const moduleGraph = new ModuleGraph((url) => pluginContainer.resolveId(url))
+  const ws = createWebSocketServer(app);
+  const watcher = chokidar.watch(root, {
+    ignored: [
+      // 忽略所有 node_modules 及其子目录
+      "**/node_modules/**",
+      // 但排除 .m-vite 目录的忽略
+      "!**/node_modules/.m-vite/**",
+      "!**/.m-vite/**",
+      "**/.git/**"],
+    ignoreInitial: true,
+  });
+
+
   console.log(`output->root`, root)
 
   const serverContext: ServerContext = {
@@ -33,9 +52,11 @@ export async function startDevServer() {
     app,
     pluginContainer,
     plugins,
-    moduleGraph
+    moduleGraph,
+    ws,
+    watcher
   };
-
+  bindingHMREvents(serverContext);
   for (const plugin of plugins) {
     if (plugin.configureServer) {
       await plugin.configureServer(serverContext);

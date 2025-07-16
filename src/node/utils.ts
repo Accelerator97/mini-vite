@@ -14,6 +14,7 @@ export const isWindows = os.platform() === "win32";
 export function normalizePath(id: string): string {
     return path.posix.normalize(isWindows ? slash(id) : id);
 }
+
 export function getShortName(file: string, root: string) {
     return file.startsWith(root + "/") ? path.posix.relative(root, file) : file;
 }

@@ -4,6 +4,7 @@ import {
     BARE_IMPORT_RE,
     DEFAULT_EXTERSIONS,
     PRE_BUNDLE_DIR,
+    CLIENT_PUBLIC_PATH
 } from "../constant";
 import {
     cleanUrl,
@@ -52,7 +53,7 @@ export function importAnalysisPlugin(): Plugin {
                 const mod = moduleGraph.getModuleById(cleanedId);
                 let resolvedId = `/${getShortName(resolved.id, serverContext.root)}`;
                 if (mod && mod.lastHMRTimestamp > 0) {
-                    // resolvedId += "?t=" + mod.lastHMRTimestamp;
+                    resolvedId += "?t=" + mod.lastHMRTimestamp;
                 }
                 return resolvedId;
             };
@@ -85,6 +86,16 @@ export function importAnalysisPlugin(): Plugin {
                         importedModules.add(resolved);
                     }
                 }
+            }
+            // 只对业务源码注入
+            if (!id.includes("node_modules") && !id.includes(CLIENT_PUBLIC_PATH)) {
+                // 注入 HMR 相关的工具函数
+                ms.prepend(
+                    `import { createHotContext as __vite__createHotContext } from "${CLIENT_PUBLIC_PATH}";\n` +
+                    `import.meta.hot = __vite__createHotContext(${JSON.stringify(
+                        cleanUrl(curMod.url)
+                    )});\n`
+                );
             }
             moduleGraph.updateModuleInfo(curMod, importedModules);
 
